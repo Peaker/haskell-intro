@@ -4,6 +4,7 @@
 
 import Control.Arrow ((&&&))
 import Data.List (group)
+import Test.QuickCheck (quickCheck)
 
 {- And with the #'s it's a pragma ^ -}
 
@@ -18,10 +19,7 @@ primes :: [Integer]
 primes = sieve [2..]
   where
     sieve (p:xs) = p : sieve [x|x <- xs, x `mod` p > 0]
-
--- Note we may want to explicitly add the case:
--- sieve [] = error "sieve is applied with a non-empty list!"
--- To satisfy the compiler (which yells about non-exhaustive pattern matches)
+    sieve [] = error "sieve is applied with a non-empty list!"
 
 -- (+) :: Integer -> Integer -> Integer -- <- Lie to children
 -- tail :: [a] -> [a]
@@ -80,6 +78,16 @@ histogram = map (head &&& length) . group . sort
 -- snd :: (a, b) -> b
 prop_histogram_length :: [Int] -> Bool
 prop_histogram_length xs = sum (map snd (histogram xs)) == length xs
+
+prop_histogram_each :: [Char] -> Bool
+prop_histogram_each xs = all matchList (histogram xs)
+  where
+    matchList (x, count) = length (filter (==x) xs) == count
+
+main :: IO ()
+main = do
+  quickCheck prop_histogram_length
+  quickCheck prop_histogram_each
 
 -- Here we can use "head" because "group" is guaranteed to return
 -- non-empty lists (but unfortunately it does not specify this in its
